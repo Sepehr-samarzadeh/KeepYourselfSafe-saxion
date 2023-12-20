@@ -2,41 +2,40 @@
 
 //shift register pins
 const int latchPin = 9;
-const int clockPin = 10;
-const int dataPin = 11;
+const int clockPin = 8;
+const int dataPin = 10;
 
-// Function to shift out a byte to the shift register
+byte getSegmentDataForNumber(int number);
+// function to shift out a byte to the shift register
 void shiftOutByte(byte data) {
-    digitalWrite(latchPin, LOW);  // Start the transfer
-    shiftOut(dataPin, clockPin, MSBFIRST, data);  // Shift out the data
-    digitalWrite(latchPin, HIGH);  // End the transfer
+    digitalWrite(latchPin, LOW);  // start the transfer
+    shiftOut(dataPin, clockPin, MSBFIRST, data);  // shift out the data
+    digitalWrite(latchPin, HIGH);  // end the transfer
 }
 
 void setup() {
-    // Set shift register pins as output
+    // set shift register pins as output
     pinMode(latchPin, OUTPUT);
     pinMode(clockPin, OUTPUT);
     pinMode(dataPin, OUTPUT);
 
-    // Additional setup code...
+    //setup code...
 }
 
 void loop() {
-    // Your main loop code...
-    // Example: Display a number on the seven-segment display
-    int numberToDisplay = 5;  // Replace with your desired value
-    byte segmentData = getSegmentDataForNumber(numberToDisplay);
+    //display a number on the seven-segment display
+    int numberToDisplay = 5;  //example for showing the number
+    byte segmentData = getSegmentDataForNumber(numberToDisplay); //TODO:needs working
     shiftOutByte(segmentData);
 
-    // Your other main loop code...
 }
 
-// Function to get segment data for a specific number (replace with your implementation)
+//get segment data for a specific number
 byte getSegmentDataForNumber(int number) {
-    // Implement your logic to map a number to seven-segment display data
-    // This can be a lookup table or any other mapping method
-    // Return the appropriate byte for the seven-segment display
-    // Example: Implement a simple mapping for numbers 0-9
+    // TODO:logic to map a number to seven-segment display data
+    // TODO: we need to find a mapping method
+    // TODO:return the appropriate byte for the seven-segment display
+    //simple mapping for numbers 0-9
     byte segmentData[] = {
             B11111100,  // 0
             B01100000,  // 1
@@ -50,11 +49,11 @@ byte getSegmentDataForNumber(int number) {
             B11110110   // 9
     };
 
-    // Ensure the number is within a valid range
+    // TODO: make sure the number is in the a valid range
     if (number >= 0 && number <= 9) {
         return segmentData[number];
     } else {
-        return 0;  // Default to display nothing
+        return 0;  //display nothing
     }
 }
 
