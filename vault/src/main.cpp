@@ -1,63 +1,57 @@
 #include <Arduino.h>
+#include "binary.h"
+#include "time.h"
+//TODO: all globals in the struct
 
 //shift register pins
-const int latchPin = 9;
-const int clockPin = 8;
-const int dataPin = 10;
+const int RCLK = 9; //RCLK pin number 12 is labeled as "RCLK" or "ST_CP" (Storage Register Clock Input). This pin is used to control when the data stored in the shift register is transferred to the storage register (output latch)  After shifting the desired data into the shift register, a pulse on this pin will update the parallel outputs, allowing the data to appear simultaneously on all the output pins. ST_CP
+const int SRCLK = 8; //SRCLK This pin is responsible for shifting the data into the shift register, Connect this pin to the clock signal source (e.g., Arduino digital output) to control the shifting of data into the shift registe  Each pulse on this pin shifts the data by one bit. SH_CP
+const int SER = 11; //SER  This is the input for the data that will be shifted into the shift register. cooect to the digital pin of arduino DATA INPUT DS_PIN
 
-byte getSegmentDataForNumber(int number);
-// function to shift out a byte to the shift register
-void shiftOutByte(byte data) {
-    digitalWrite(latchPin, LOW);  // start the transfer
-    shiftOut(dataPin, clockPin, MSBFIRST, data);  // shift out the data
-    digitalWrite(latchPin, HIGH);  // end the transfer
+
+//binary values for each digit
+byte segmentData[] = {
+        B00000011,  // 0
+        B10011111,  // 1
+        B00100101,  // 2
+        B00001101,  // 3
+        B10011001,  // 4
+        B01001001,  // 5
+        B01000001,  // 6
+        B00011111,  // 7
+        B00000001,  // 8
+        B00001001   // 9
+};
+
+
+
+//functions:
+void shiftOutData(byte data) {
+    digitalWrite(RCLK, LOW);
+    shiftOut(SER, SRCLK, MSBFIRST, data);
+    digitalWrite(RCLK, HIGH);
 }
 
-void setup() {
-    // set shift register pins as output
-    pinMode(latchPin, OUTPUT);
-    pinMode(clockPin, OUTPUT);
-    pinMode(dataPin, OUTPUT);
-
-    //setup code...
-}
-
-void loop() {
-    //display a number on the seven-segment display
-    int numberToDisplay = 5;  //example for showing the number
-    byte segmentData = getSegmentDataForNumber(numberToDisplay); //TODO:needs working
-    shiftOutByte(segmentData);
-
-}
-
-//get segment data for a specific number
-byte getSegmentDataForNumber(int number) {
-    // TODO:logic to map a number to seven-segment display data
-    // TODO: we need to find a mapping method
-    // TODO:return the appropriate byte for the seven-segment display
-    //simple mapping for numbers 0-9
-    byte segmentData[] = {
-            B11111100,  // 0
-            B01100000,  // 1
-            B11011010,  // 2
-            B11110010,  // 3
-            B01100110,  // 4
-            B10110110,  // 5
-            B10111110,  // 6
-            B11100000,  // 7
-            B11111110,  // 8
-            B11110110   // 9
-    };
-
-    // TODO: make sure the number is in the a valid range
-    if (number >= 0 && number <= 9) {
-        return segmentData[number];
-    } else {
-        return 0;  //display nothing
+//loop in 3 7-segment
+void displayDigit(int digit, int displayCount, int delayTime) {
+    for (int displayNumber = 0; displayNumber < displayCount; ++displayNumber) {
+        //display the current number on display
+        shiftOutData(segmentData[digit]);
+        delay(delayTime);
     }
 }
 
 
 
+void setup() {
+    pinMode(SER, OUTPUT);
+    pinMode(RCLK, OUTPUT);
+    pinMode(SRCLK, OUTPUT);
+}
 
+void loop() {
+    for (int digit = 0; digit < 10; ++digit) {
+        displayDigit(digit, 3, 1000);
+    }
 
+}
