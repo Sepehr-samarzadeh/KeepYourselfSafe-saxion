@@ -10,6 +10,7 @@ const int SER = 11; //SER  This is the input for the data that will be shifted i
 
 
 //binary values for each digit
+//FIXME:the binary reperesentation on 7-segment Display is not correct!
 byte segmentData[] = {
         B00000011,  // 0
         B10011111,  // 1
@@ -26,6 +27,7 @@ byte segmentData[] = {
 
 
 //functions:
+//TODO:we need to find a way to pass data
 void shiftOutData(byte data) {
     digitalWrite(RCLK, LOW);
     shiftOut(SER, SRCLK, MSBFIRST, data);
