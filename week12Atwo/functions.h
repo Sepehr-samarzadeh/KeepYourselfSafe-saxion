@@ -1,8 +1,0 @@
-//
-// Created by user on 12/27/2023.
-//
-
-#ifndef WEEK12ATWO_FUNCTIONS_H
-#define WEEK12ATWO_FUNCTIONS_H
-
-#endif //WEEK12ATWO_FUNCTIONS_H
