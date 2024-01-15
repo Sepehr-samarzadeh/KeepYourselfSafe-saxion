@@ -1,25 +1,21 @@
 #include <Arduino.h>
-
 //rotary encoder
 #define outputA 12
 #define outputB 11
 #define button 9
+#define RCLK1 10
 #define SER 6
-#define RCLK 7
+#define RCLK2 7
 #define SRCLK 8
 
+int code[3];
 int segmentData[10] = { 64, 121, 36, 48, 25, 18, 2, 120, 0, 24 };
 int pressed;
 const int bcdpin[4] = { 2, 3, 4, 5 };
-//int digit;
-// int counter = 0;
-//rotary encoder end
 int RotaryEncoder() {
     static unsigned long prev_time_of_change_in_A = 0;
     int static old = LOW;  // old value of A
-
     int b;
-    //rotary encoder
     int a;
     static int counter = 0;  // moved from global to  here
     a = digitalRead(outputA);
@@ -41,15 +37,9 @@ int RotaryEncoder() {
             if (counter < 0) {
                 counter = 9;
             }
-            Serial.print("Rotary: ");
-            Serial.println(counter);
         }
     }
-
-    // old = a;
-    // digit = counter;
     return counter;
-    // return digit;
 }
 
 int ButtonPressed() {
@@ -68,20 +58,16 @@ int ButtonPressed() {
         }
     }
     return 0;
-    // if(buttonState==LOW){
-    //   pressed = 1;
-    // }else pressed = 0;
-    // return pressed;
 }
-
-void shiftOutData(int ShiftNum) {
-    digitalWrite(RCLK, LOW);
+void shiftOutData1(int ShiftNum) {
+    digitalWrite(RCLK1, LOW);
     shiftOut(SER, SRCLK, MSBFIRST, ShiftNum);
-    // Serial.print("shift out: ");
-    // Serial.print(ShiftNum, BIN);
-    // Serial.println();
-    //shiftOut(SER, SRCLK, MSBFIRST, 0);
-    digitalWrite(RCLK, HIGH);
+    digitalWrite(RCLK1, HIGH);
+}
+void shiftOutData2(int ShiftNum) {
+    digitalWrite(RCLK2, LOW);
+    shiftOut(SER, SRCLK, MSBFIRST, ShiftNum);
+    digitalWrite(RCLK2, HIGH);
 }
 void decoder(int bcdNumber) {
     int bcdData[4] = { 0, 0, 0, 0 };
@@ -102,9 +88,9 @@ void setup() {
     pinMode(outputA, INPUT);
     pinMode(outputB, INPUT);
     pinMode(button, INPUT_PULLUP);
-
     pinMode(SER, OUTPUT);
-    pinMode(RCLK, OUTPUT);
+    pinMode(RCLK1, OUTPUT);
+    pinMode(RCLK2, OUTPUT);
     pinMode(SRCLK, OUTPUT);
     for (int i = 0; i < 4; i++) {
         pinMode(bcdpin[i], OUTPUT);
@@ -115,25 +101,27 @@ void setup() {
 }
 
 void loop() {
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         while (ButtonPressed() == 0) {
             int digit = RotaryEncoder();
-            //Serial.println(digit);
             if (i == 0) {
-                //BCD_PLACEHOLDER;
+                //BCD
                 decoder(digit);
+                code[0] = digit;
             }
             if (i == 1) {
-                //SHIFT1_PLACEHOLDER;
-                shiftOutData(segmentData[digit]);
+                //Shift Register 1
+                shiftOutData1(segmentData[digit]);
+                code[1] = digit;
             }
             if (i == 2) {
-                //SHIFT2_PLACEHOLDER;
-                //shiftOutData(segmentData[digit]);
+                //Shift Register 2
+                shiftOutData2(segmentData[digit]);
+                code[2] = digit;
             }
+            if(i==3);
+            //keeps the code static on the displays. as soon as you press again, u go through.
         }
     }
-
-
-    //rotary encoder end
+    for(int i=0; i<3; i++) Serial.println(code[i]);
 }
