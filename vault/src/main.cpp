@@ -1,5 +1,4 @@
 #include <Arduino.h>
-//rotary encoder
 #include <EEPROM.h>
 #include <stdbool.h>
 #include <Servo.h>
@@ -12,8 +11,8 @@
 #define SERVO_POS 90
 #define OPEN 90
 #define CLOSED 0
-#define BUZZERPIN 8 //change this
-#define LED_GREEN 5 // change this
+#define BUZZERPIN A1 //change this
+#define LED_GREEN A0// change this
 Servo myServo;
 
 ///OLED Display
@@ -36,10 +35,10 @@ Adafruit_SSD1306 display(WIDTH, HEIGHT, &Wire, -1);
 int penalty = 0;
 int itteration = 0;
 const int passwordLength = 3;  // Change the password length as needed
-int storedPassword[passwordLength] = {}; // put in the passsword
-int code[3];
+int storedPassword[passwordLength] = {0,0,0}; // put in the passsword
+int code[passwordLength];
 int segmentData[10] = { 64, 121, 36, 48, 25, 18, 2, 120, 0, 24 };
-int pressed;
+//int pressed;
 const int bcdpin[4] = { 2, 3, 4, 5 };
 
 //Anita's door and OLED
@@ -103,28 +102,35 @@ void vault_open(){
     display.clearDisplay();
     display.setTextSize(3);
     display.setCursor(0,30);
-    display.println("Open");
+    display.println("OPEN!");
     display.display();
 }
 
 
 //EEPROM
-int checkPassword() {
+bool checkPassword() {
     int count = 0;
-    for ( int i = 0; i < passwordLength; i++){
-        if (storedPassword[i] == code[i]){
+    for(int i = 0; i<3; i++){
+        storedPassword[i] = EEPROM.read(i);
+    }
+    for(int i = 0; i < 3; i++){
+        if(storedPassword[i] == code[i]){
             count++;
         }
     }
     if (count == 3){
-        return 1;
+        count= 0;
+        return true;
     }
-    else return 0;
+    else {
+        count= 0;
+        return false;
+    }
 }
 
 void setNewPassword() {
-    for (int i = 0; i < passwordLength; ++i) {
-        EEPROM.update(storedPassword[i],code[i]);
+    for(int i = 0; i<3; i++){
+        EEPROM.update(i, code[i]);
     }
 }
 
@@ -213,6 +219,7 @@ void setup() {
     pinMode(LED_GREEN, OUTPUT);
     pinMode(BUZZERPIN, OUTPUT);
 
+    itteration = EEPROM.read(4);
 
 // the second parameter is the address (either 0x3D or 0x3C)
     display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
@@ -220,8 +227,6 @@ void setup() {
     display.setTextColor(WHITE);
     display.setTextWrap(true); //This moves long text to a newline
     display.display();
-
-
 
     //rotary encoder
     pinMode(outputA, INPUT);
@@ -267,19 +272,18 @@ void loop() {
         door_closed();
     }
     if(itteration > 0){
-        if(checkPassword() == 1){
+        if(checkPassword() == true){
             door_open();
             penalty = 0;
-            itteration = 0;
+            itteration = -1;
         }
         else{
             incorrect_password();
             delay(1000 + penalty*1000);
             penalty++;
+            //make a pib sound
         }
     }
-    for(int i=0; i<3; i++) {
-        Serial.println("%d", storedPassword[i]);
-    }
     itteration++;
+    EEPROM.update(4, itteration);
 }
