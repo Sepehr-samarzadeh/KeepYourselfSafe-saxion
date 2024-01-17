@@ -13,6 +13,7 @@
 #define CLOSED 0
 #define BUZZERPIN A1 //change this
 #define LED_GREEN A0// change this
+#define LED_RED A2
 Servo myServo;
 
 ///OLED Display
@@ -21,7 +22,7 @@ Servo myServo;
 Adafruit_SSD1306 display(WIDTH, HEIGHT, &Wire, -1);
 
 //EEprom
-#define resetbutton 13
+#define reset_button A3
 //rotary encoder
 #define outputA 12
 #define outputB 11
@@ -82,6 +83,7 @@ void door_open(){
         delay(10);
     }
     digitalWrite(LED_GREEN, HIGH);
+    digitalWrite(LED_RED, LOW);
     vault_open();
     playBipBipSound();
 
@@ -93,6 +95,7 @@ void door_closed(){
         delay(10);
     }
     digitalWrite(LED_GREEN, LOW);
+    digitalWrite(LED_RED, HIGH);
     vault_closed();
     playBipBipSound();
 }
@@ -217,7 +220,9 @@ void setup() {
     myServo.attach(SERVO_PIN);
     myServo.write(CLOSED);
     pinMode(LED_GREEN, OUTPUT);
+    pinMode(LED_RED, OUTPUT);
     pinMode(BUZZERPIN, OUTPUT);
+    pinMode(reset_button, INPUT_PULLUP);
 
     itteration = EEPROM.read(4);
 
@@ -245,9 +250,17 @@ void setup() {
 }
 
 void loop() {
+    // put everything to 0.
+    int digit = 0;
+    shiftOutData1(segmentData[digit]);
+    shiftOutData2(segmentData[digit]);
+    decoder(digit);
+    //start asking for input for code
     for (int i = 0; i < 4; i++) {
+        //everytime a digit is entered, switch the display
         while (ButtonPressed() == 0) {
-            int digit = RotaryEncoder();
+            // allow the user to determine their code
+            digit = RotaryEncoder();
             if (i == 0) {
                 //BCD
                 decoder(digit);
@@ -263,15 +276,19 @@ void loop() {
                 shiftOutData2(segmentData[digit]);
                 code[2] = digit;
             }
-            if(i==3);
-            //keeps the code static on the displays. as soon as you press again, u go through.
+            if(i==3) {
+                //Static state to see your code.
+                if(digitalRead(reset_button) == LOW && itteration == 0){
+                    itteration = -1;
+                }
+            }
         }
     }
     if(itteration == 0){
         setNewPassword();
         door_closed();
     }
-    if(itteration > 0){
+    if(itteration >= 1){
         if(checkPassword() == true){
             door_open();
             penalty = 0;
@@ -279,7 +296,7 @@ void loop() {
         }
         else{
             incorrect_password();
-            delay(1000 + penalty*1000);
+            delay(5000 + penalty*5000);
             penalty++;
             //make a pib sound
         }
@@ -287,3 +304,5 @@ void loop() {
     itteration++;
     EEPROM.update(4, itteration);
 }
+
+
